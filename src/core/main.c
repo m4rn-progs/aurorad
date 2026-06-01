@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 
+// Figure out what the actual fuck are these for
 #include <fcntl.h>
 #include <linux/oom.h>
 #include <linux/vt.h>
@@ -9,6 +10,7 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
+// Same for this, but hint: Memory management (?)
 #if HAVE_VALGRIND_VALGRIND_H
 #  include <valgrind/valgrind.h>
 #endif
@@ -17,6 +19,11 @@
 #include "sd-daemon.h"
 #include "sd-json.h"
 #include "sd-messages.h"
+
+/* 
+"include" NUKEEE, maybe replace some things and leave to the user
+what do they want to add
+*/
 
 #include "alloc-util.h"
 #include "ansi-color.h"
@@ -118,9 +125,13 @@
 #include "virt.h"
 #include "watchdog.h"
 
+
+// figure this out too
 #if HAS_FEATURE_ADDRESS_SANITIZER
 #include <sanitizer/lsan_interface.h>
 #endif
+
+// Stating new names for... idk lol.
 
 static enum {
         ACTION_RUN,
@@ -218,6 +229,8 @@ static int manager_find_user_config_paths(char ***ret_files, char ***ret_dirs) {
         return 0;
 }
 
+// why the fuck is "console windows size" a thing managed by this.
+
 static int save_console_winsize_in_environment(int tty_fd) {
         int r;
 
@@ -254,6 +267,10 @@ unset:
         (void) unsetenv("LINES");
         return 0;
 }
+
+/*
+Nvm, a million things to manage tty things, won't be touched.
+*/
 
 static int console_setup(void) {
 
@@ -765,6 +782,10 @@ static int config_parse_protect_system_pid1(
         return 0;
 }
 
+
+/* Why would there be any need to restrict filesystem?
+ Nvm, check for that config option*/
+
 static int config_parse_restrict_filesystem_access(
                 const char *unit,
                 const char *filename,
@@ -815,6 +836,8 @@ static int config_parse_crash_reboot(
         *v = r > 0 ? CRASH_REBOOT : CRASH_FREEZE;
         return 0;
 }
+
+// Big Bertha made off of configuration options.
 
 static int parse_config_file(void) {
         const ConfigTableItem items[] = {
@@ -911,6 +934,8 @@ static int parse_config_file(void) {
 #endif
                 {}
         };
+
+        // More and more configuration-related code.
 
         if (arg_runtime_scope == RUNTIME_SCOPE_SYSTEM)
                 (void) config_parse_standard_file_with_dropins(
@@ -1245,6 +1270,8 @@ static int parse_argv(int argc, char *argv[]) {
         return 0;
 }
 
+// 'help' argument of presumably 'systemd' command
+
 static int help(void) {
         _cleanup_(table_unrefp) Table *options = NULL;
         int r;
@@ -1267,6 +1294,8 @@ static int help(void) {
         return 0;
 }
 
+// 1299 and below mostly just moving memory around
+// Gotta educate myself on it.
 static int prepare_reexecute(
                 Manager *m,
                 FILE **ret_f,
@@ -1325,6 +1354,7 @@ static int prepare_reexecute(
         return 0;
 }
 
+// bumps, a lot of them.
 static void bump_file_max_and_nr_open(void) {
 
         /* Let's bump fs.file-max and fs.nr_open to their respective maximums. On current kernels large
@@ -1453,6 +1483,7 @@ static int enforce_syscall_archs(Set *archs) {
         return 0;
 }
 
+// Just OS info
 static int os_release_status(void) {
         _cleanup_free_ char *pretty_name = NULL, *fancy_name = NULL,
                 *name = NULL, *version = NULL, *ansi_color = NULL, *support_end = NULL, *codename = NULL;
@@ -1704,6 +1735,8 @@ static int fixup_environment(void) {
         return 0;
 }
 
+/* It's likely this is about SystemD's turning-off
+   -the-system management */
 static int become_shutdown(int objective, int retval) {
         static const char* const table[_MANAGER_OBJECTIVE_MAX] = {
                 [MANAGER_EXIT]     = "exit",
@@ -1821,6 +1854,8 @@ static int become_shutdown(int objective, int retval) {
         return -errno;
 }
 
+// System clock shenanigans
+
 static void initialize_clock_timewarp(void) {
         int r;
 
@@ -1932,6 +1967,8 @@ static void initialize_core_pattern(bool skip_setup) {
                 log_warning_errno(r, "Failed to write '%s' to /proc/sys/kernel/core_pattern, ignoring: %m",
                                   arg_early_core_pattern);
 }
+
+// Related to the ProtectSystem configuration option.
 
 static void apply_protect_system(bool skip_setup) {
         int r;
@@ -2075,6 +2112,9 @@ static void reduce_vt(ManagerObjective objective) {
                 else
                         log_debug("Successfully disallocated VT TTY %i.", ttynr);
 }
+
+// Gotta research 'reexecute' too. Nothing too
+// interesting from this point onwards.
 
 static int do_reexecute(
                 ManagerObjective objective,
@@ -2942,6 +2982,8 @@ static void determine_default_oom_score_adjust(void) {
         arg_defaults.oom_score_adjust_set = true;
 }
 
+
+// Configuration again, in this case handling config files.
 static int parse_configuration(const struct rlimit *saved_rlimit_nofile,
                                const struct rlimit *saved_rlimit_memlock) {
         int r;
@@ -3400,6 +3442,7 @@ static int save_env(void) {
         return 0;
 }
 
+// Here *actually* begins SystemD
 int main(int argc, char *argv[]) {
         dual_timestamp
                 initrd_timestamp = DUAL_TIMESTAMP_NULL,
